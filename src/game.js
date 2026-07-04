@@ -143,62 +143,96 @@ function showCustomize() {
   for (const t of CUSTOMIZABLE) chosen[t] = dominantAllele(t).id;
   let gender = "female";
   let name = randomName();
+  const genotype = makeGenotype(chosen); // 한 번만 생성, 좌위별 갱신
 
-  // 유전자형을 한 번만 생성해 안정적으로 유지. 형질 변경 시 해당 좌위만 갱신.
-  const genotype = makeGenotype(chosen);
+  // 부위 탭: 성별 + 커스터마이징 형질
+  const GENDER_OPTS = [
+    { id: "female", label: "여자", icon: "👧" },
+    { id: "male", label: "남자", icon: "👦" },
+  ];
+  const SHAPE_ICON = {
+    round: "◯", oval: "◇", curly: "🌀", straight: "▌", almond: "◗",
+  };
+  const categories = [
+    { id: "gender", label: "성별" },
+    ...CUSTOMIZABLE.map((t) => ({ id: t, label: TRAITS[t].label })),
+  ];
+  let tab = categories[0].id;
+
+  // 활성 탭의 옵션 목록과 현재 선택값
+  function optionsOf(catId) {
+    if (catId === "gender") return GENDER_OPTS.map((o) => ({ id: o.id, label: o.label, icon: o.icon }));
+    return TRAITS[catId].alleles.map((a) => ({ id: a.id, label: a.label, color: a.color, icon: SHAPE_ICON[a.id] }));
+  }
+  function currentValue(catId) {
+    return catId === "gender" ? gender : chosen[catId];
+  }
+  function setValue(catId, id) {
+    if (catId === "gender") { gender = id; return; }
+    chosen[catId] = id;
+    genotype[catId] = makeLocus(catId, id);
+  }
+  // 화살표: 현재 탭 옵션을 앞/뒤로 순환
+  function cycle(dir) {
+    const opts = optionsOf(tab);
+    const idx = opts.findIndex((o) => o.id === currentValue(tab));
+    const next = (idx + dir + opts.length) % opts.length;
+    setValue(tab, opts[next].id);
+    render();
+  }
 
   function preview() {
-    return renderCharacter(phenotypeOf(genotype), { gender, size: 200, hearts: true });
+    return renderCharacter(phenotypeOf(genotype), { gender, size: 210, hearts: true });
   }
 
   function render() {
-    const traitControls = CUSTOMIZABLE.map((tid) => {
-      const trait = TRAITS[tid];
-      const chips = trait.alleles.map((al) => {
-        const active = chosen[tid] === al.id ? "active" : "";
-        const swatch = al.color ? `<span class="swatch" style="background:${al.color}"></span>` : "";
-        return `<button class="chip ${active}" data-trait="${tid}" data-allele="${al.id}">${swatch}${al.label}</button>`;
-      }).join("");
-      return `<div class="trait-group">
-        <div class="label">${trait.label}</div>
-        <div class="choice-row">${chips}</div>
-      </div>`;
+    const tabsHTML = categories.map((c) =>
+      `<button class="maker-tab ${tab === c.id ? "active" : ""}" data-tab="${c.id}">${c.label}</button>`
+    ).join("");
+
+    const cur = currentValue(tab);
+    const tilesHTML = optionsOf(tab).map((o) => {
+      const swatch = o.color
+        ? `<span class="opt-swatch" style="background:${o.color}"></span>`
+        : `<span class="opt-swatch">${o.icon || "·"}</span>`;
+      return `<button class="opt-tile ${o.id === cur ? "active" : ""}" data-opt="${o.id}">
+        ${swatch}<span>${o.label}</span>
+      </button>`;
     }).join("");
 
+    const catLabel = categories.find((c) => c.id === tab).label;
+
     screen.innerHTML = `
-      <div class="card fadein">
-        <h2>내 캐릭터 만들기</h2>
-        <div class="customize-layout">
-          <div class="controls-col">
-            <div class="trait-group">
-              <div class="label">성별</div>
-              <div class="choice-row">
-                <button class="chip ${gender === "female" ? "active" : ""}" data-gender="female">👧 여자</button>
-                <button class="chip ${gender === "male" ? "active" : ""}" data-gender="male">👦 남자</button>
-              </div>
-            </div>
-            ${traitControls}
+      <div class="card maker-card fadein">
+        <div class="maker-titlebar">✨ 나만의 캐릭터 만들기</div>
+        <div class="maker-body">
+          <div class="maker-stage">
+            <div class="stage-caption">＜ ${catLabel} ＞ 를 바꿔보세요</div>
+            <button class="stage-arrow left" id="arrowL" aria-label="이전">‹</button>
+            <div class="stage-char" id="previewBox">${preview()}</div>
+            <div class="maker-platform"></div>
+            <button class="stage-arrow right" id="arrowR" aria-label="다음">›</button>
           </div>
-          <div class="preview-col">
-            <div class="char-portrait" id="previewBox">${preview()}</div>
-            <input class="name-input" id="nameInput" value="${name}" maxlength="6" />
-            <button class="btn secondary" id="randomBtn">🎲 랜덤</button>
-            <button class="btn" id="doneBtn">이 캐릭터로 시작 💗</button>
+          <div class="maker-panel">
+            <div class="maker-tabs">${tabsHTML}</div>
+            <div class="maker-options">${tilesHTML}</div>
           </div>
+        </div>
+        <div class="maker-footer">
+          <input class="name-input" id="nameInput" value="${name}" maxlength="6" placeholder="이름" />
+          <button class="btn secondary" id="randomBtn">🎲 랜덤</button>
+          <button class="btn" id="doneBtn">결정! 💗</button>
         </div>
       </div>`;
 
-    screen.querySelectorAll("[data-trait]").forEach((btn) => {
-      btn.onclick = () => {
-        const t = btn.dataset.trait;
-        chosen[t] = btn.dataset.allele;
-        genotype[t] = makeLocus(t, chosen[t]); // 바뀐 좌위만 갱신
-        render();
-      };
+    screen.querySelectorAll("[data-tab]").forEach((b) => {
+      b.onclick = () => { tab = b.dataset.tab; render(); };
     });
-    screen.querySelectorAll("[data-gender]").forEach((btn) => {
-      btn.onclick = () => { gender = btn.dataset.gender; render(); };
+    screen.querySelectorAll("[data-opt]").forEach((b) => {
+      b.onclick = () => { setValue(tab, b.dataset.opt); render(); };
     });
+    document.getElementById("arrowL").onclick = () => cycle(-1);
+    document.getElementById("arrowR").onclick = () => cycle(1);
     document.getElementById("nameInput").oninput = (e) => { name = e.target.value; };
     document.getElementById("randomBtn").onclick = () => {
       for (const t of CUSTOMIZABLE) {
@@ -206,6 +240,7 @@ function showCustomize() {
         chosen[t] = alleles[Math.floor(Math.random() * alleles.length)].id;
         genotype[t] = makeLocus(t, chosen[t]);
       }
+      gender = Math.random() < 0.5 ? "female" : "male";
       name = randomName();
       render();
     };

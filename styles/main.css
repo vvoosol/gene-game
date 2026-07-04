@@ -257,3 +257,84 @@ h2 { color: var(--pink-deep); }
   .gg-blink { transform: scaleY(0); }
   .gg-heart { opacity: 0; }
 }
+
+/* ================= 캐릭터 생성 창 (메이플 느낌) ================= */
+.maker-card { padding: 0; overflow: hidden; }
+.maker-titlebar {
+  background: linear-gradient(180deg, #ff9ec2, #ff7aa8);
+  color: #fff; font-weight: 800; font-size: 1.1rem;
+  padding: 12px 18px; display: flex; align-items: center; gap: 8px;
+  border-bottom: 3px solid #ffd0e2;
+}
+.maker-body { display: grid; grid-template-columns: 1fr 320px; }
+@media (max-width: 760px) { .maker-body { grid-template-columns: 1fr; } }
+
+/* 왼쪽: 캐릭터 무대 */
+.maker-stage {
+  position: relative;
+  background:
+    radial-gradient(120% 80% at 50% 12%, #fff6fb 0%, #ffe9f4 55%, #ffd9ec 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px 12px 30px; min-height: 360px;
+  border-right: 3px solid #ffe3ef;
+}
+.maker-stage .stage-char { position: relative; z-index: 2; }
+.maker-platform {
+  position: absolute; bottom: 34px; left: 50%; transform: translateX(-50%);
+  width: 190px; height: 34px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(224,95,137,0.28), rgba(224,95,137,0));
+  z-index: 1;
+}
+.stage-arrow {
+  position: absolute; top: 46%; transform: translateY(-50%);
+  width: 46px; height: 46px; border-radius: 50%;
+  border: none; cursor: pointer; z-index: 3;
+  background: #fff; color: var(--pink-deep); font-size: 1.4rem; font-weight: 900;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .08s ease, filter .15s ease;
+}
+.stage-arrow:hover { filter: brightness(1.03); }
+.stage-arrow:active { transform: translateY(-50%) scale(0.9); }
+.stage-arrow.left { left: 14px; }
+.stage-arrow.right { right: 14px; }
+.stage-caption {
+  position: absolute; top: 12px; left: 0; right: 0; text-align: center;
+  font-weight: 800; color: var(--pink-deep); font-size: 0.95rem;
+}
+
+/* 오른쪽: 부위 탭 + 팔레트 */
+.maker-panel { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.maker-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.maker-tab {
+  border: 2px solid var(--pink-soft); background: #fff; color: var(--ink-soft);
+  border-radius: 10px; padding: 7px 11px; cursor: pointer; font-weight: 700; font-size: 0.82rem;
+}
+.maker-tab.active { background: var(--pink); color: #fff; border-color: var(--pink); }
+
+.maker-options {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  background: #fff6fb; border: 2px solid #ffe3ef; border-radius: 14px; padding: 10px;
+  min-height: 150px; align-content: start;
+}
+.opt-tile {
+  border: 2px solid #ffe0ec; background: #fff; border-radius: 12px;
+  padding: 8px 4px 6px; cursor: pointer; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  font-size: 0.76rem; font-weight: 700; color: var(--ink);
+  transition: transform .08s ease, border-color .12s ease;
+}
+.opt-tile:hover { transform: translateY(-2px); border-color: var(--pink); }
+.opt-tile.active { border-color: var(--pink); background: #fff0f6; box-shadow: 0 0 0 2px var(--pink-soft) inset; }
+.opt-swatch {
+  width: 34px; height: 34px; border-radius: 9px; border: 1px solid rgba(0,0,0,0.08);
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+  background: #ffeaf3;
+}
+
+/* 하단 바 */
+.maker-footer {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;
+  padding: 14px; border-top: 3px solid #ffe3ef; background: #fff9fc;
+}
+.maker-footer .name-input { width: 160px; }
