@@ -1,4 +1,10 @@
-from gene_game import check_guess, play_round
+from gene_game import check_guess, generate_target, play_round
+
+
+def test_generate_target_within_bounds():
+    for _ in range(100):
+        target = generate_target(1, 100)
+        assert 1 <= target <= 100
 
 
 def test_check_guess_too_low():
