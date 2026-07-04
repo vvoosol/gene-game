@@ -1,15 +1,63 @@
-# Gene Game
+# 💕 두근두근 유전 소개팅 (Gene Game)
 
-A tiny number-guessing game used to practice the guess/feedback loop.
+내 캐릭터로 **3:3 소개팅**에 나가 짝을 만나고, 결혼해서 아이를 낳는 브라우저 게임입니다.
+아이의 얼굴은 **멘델의 우열 법칙**에 따라 부모를 닮고, 그 아이가 자라 다음 세대의 소개팅에 나갑니다.
+가끔 **희귀 열성 형질**(오드아이 · 분홍 머리 · 주근깨)이 깜짝 등장해요!
 
-## How it works
+## 특징
 
-1. `generate_target()` picks a secret number between 1 and 100.
-2. `check_guess(target, guess)` tells you whether your guess was too low, too high, or correct.
-3. `play_round(target, guesses)` plays through a list of guesses and returns how many it recieved before winning.
+- **귀여운 치비 캐릭터** — 외부 이미지 없이 SVG 레이어로 조립되어, 유전 형질이 그대로 얼굴에 반영됩니다.
+- **캐릭터 커스터마이징** — 피부톤 · 얼굴형 · 머리색 · 머리모양 · 눈색 · 눈모양을 직접 선택.
+- **진짜 유전 엔진** — 형질좌마다 우성/열성 대립유전자를 가지며, 감수분열식으로 한 쪽씩 물려줍니다.
+- **세대 순환** — 소개팅 → 매칭 → 결혼 → 출산 → 그 아이로 다음 세대.
+- **궁합 시스템** — 성격·취미가 잘 맞을수록 매칭 확률이 올라갑니다.
 
-## Running tests
+## 실행 방법
 
 ```
-pytest
+node server.js
 ```
+
+그다음 브라우저에서 `http://localhost:5173` 을 엽니다. (별도 설치·의존성 없음)
+
+## 유전 모델 (우열의 원리)
+
+각 형질(유전자좌)은 여러 **대립유전자**를 가지며, 우성일수록 낮은 `dominance` 값을 가집니다.
+표현형은 유전자형에 있는 대립유전자 중 **가장 우성인 것**으로 결정됩니다.
+
+| 형질 | 대립유전자(우성 → 열성) |
+| --- | --- |
+| 머리색 | 검정 › 갈색 › 금발 › 분홍(희귀) |
+| 눈색 | 갈색 › 초록 › 파랑 |
+| 머리모양 | 곱슬 › 생머리 |
+| 눈모양 | 동그란 › 아몬드 |
+| 피부톤 | 구릿빛 › 보통 › 밝은 |
+| 얼굴형 | 동그란 › 갸름한 |
+| 주근깨 | 없음 › 있음(열성) |
+| 오드아이 | 보통 › 오드아이(희귀 열성) |
+
+부모가 겉보기엔 우성이어도 **열성 대립유전자를 숨긴 캐리어**일 수 있어서,
+두 캐리어가 만나면 약 25% 확률로 자식에게 열성 형질이 나타납니다.
+
+## 프로젝트 구조
+
+```
+index.html          진입점
+server.js           의존성 없는 정적 서버
+styles/main.css     스타일
+src/traits.js       형질·대립유전자 정의
+src/genetics.js     유전자형/표현형·상속·캐리어 로직
+src/art.js          표현형 → 귀여운 SVG 캐릭터
+src/personality.js  성격/취미·궁합 계산
+src/names.js        이름 생성기
+src/game.js         게임 상태 머신과 화면
+tests/genetics.test.mjs  유전 엔진 테스트
+```
+
+## 테스트
+
+```
+node --test
+```
+
+유전 엔진(우열 발현, 감수분열 상속, 캐리어 교배 시 열성 25% 발현 등)을 검증합니다.
