@@ -73,8 +73,11 @@ function updateGenBadge() {
 
 // ---------- 렌더 헬퍼 ----------
 function portraitHTML(char, opts = {}) {
+  const size = opts.size || 150;
   return `<div class="char-portrait">${renderCharacter(char.phenotype, {
-    gender: char.gender, size: opts.size || 150, expression: opts.expression || "smile",
+    gender: char.gender, size, expression: opts.expression || "smile",
+    alive: true,
+    hearts: opts.hearts != null ? opts.hearts : size >= 150,
   })}</div>`;
 }
 
@@ -145,7 +148,7 @@ function showCustomize() {
   const genotype = makeGenotype(chosen);
 
   function preview() {
-    return renderCharacter(phenotypeOf(genotype), { gender, size: 200 });
+    return renderCharacter(phenotypeOf(genotype), { gender, size: 200, hearts: true });
   }
 
   function render() {

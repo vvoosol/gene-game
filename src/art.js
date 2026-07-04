@@ -65,7 +65,7 @@ function backHair(color, gender) {
     Q158 62 110 60 Q62 62 46 92 Z" fill="${darken(color, 0.06)}"/>`;
 }
 
-function eye(cx, color, shape, freckleShadow) {
+function eye(cx, color, shape, skin, blinkDelay) {
   const isRound = shape === "round";
   const rx = isRound ? 15 : 15;
   const ry = isRound ? 17 : 11;
@@ -75,6 +75,10 @@ function eye(cx, color, shape, freckleShadow) {
   const pupil = darken(color, 0.55);
   const hi = "#ffffff";
   const lidTilt = isRound ? "" : `<path d="M${cx - 15} ${128 - 3} Q${cx} ${128 - 10} ${cx + 15} ${128 - 3}" stroke="${darken("#3a2b2b",0)}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+  // 눈꺼풀: 평소엔 접혀 있다가(scaleY 0) 가끔 깜빡인다. skin 색으로 눈을 덮어 감는 느낌.
+  const eyelid = blinkDelay != null
+    ? `<ellipse class="gg-blink" style="animation-delay:${blinkDelay}s" cx="${cx}" cy="128" rx="${rx + 1.5}" ry="${ry + 2}" fill="${skin}"/>`
+    : "";
   return `
     <g>
       <ellipse cx="${cx}" cy="128" rx="${rx}" ry="${ry}" fill="${white}"/>
@@ -85,7 +89,22 @@ function eye(cx, color, shape, freckleShadow) {
       <path d="M${cx - rx} 128 A${rx} ${ry} 0 0 1 ${cx + rx} 128" fill="none"
         stroke="${darken("#3a2b2b", 0)}" stroke-width="2.6" stroke-linecap="round" opacity="0.85"/>
       ${lidTilt}
+      ${eyelid}
     </g>`;
+}
+
+// 몽글몽글 떠오르는 하트 (크기는 바깥 그룹 scale로, 움직임은 CSS 애니메이션으로)
+function floatingHearts() {
+  const spots = [
+    { x: 154, y: 60, s: 1.9, d: 0, c: "#ff7aa8" },
+    { x: 56, y: 78, s: 1.4, d: 1.1, c: "#ff9ec2" },
+    { x: 178, y: 104, s: 1.1, d: 2.2, c: "#ffb3cf" },
+  ];
+  return `<g class="gg-hearts">` + spots.map(({ x, y, s, d, c }) => `
+    <g transform="translate(${x} ${y}) scale(${s})">
+      <path class="gg-heart" style="animation-delay:${d}s"
+        d="M6 10 C-2 5 1 -1 6 3 C11 -1 14 5 6 10 Z" fill="${c}"/>
+    </g>`).join("") + `</g>`;
 }
 
 function mouth(expression) {
@@ -113,10 +132,19 @@ function freckles(skin) {
 
 /**
  * @param pheno phenotypeOf() 결과
- * @param opts { gender, expression, outfit, size }
+ * @param opts { gender, expression, outfit, size, alive, hearts }
+ *   alive: 숨쉬기·눈 깜빡임 등 idle 애니메이션 (기본 true)
+ *   hearts: 몽글몽글 하트 연출 (기본 false)
  */
 export function renderCharacter(pheno, opts = {}) {
-  const { gender = "female", expression = "smile", outfit, size = 200 } = opts;
+  const {
+    gender = "female", expression = "smile", outfit, size = 200,
+    alive = true, hearts = false,
+  } = opts;
+
+  // 캐릭터마다 애니메이션 타이밍을 어긋나게 해 각자 살아있는 느낌을 준다.
+  const bobDelay = alive ? (-Math.random() * 3.4).toFixed(2) : null;
+  const blinkDelay = alive ? (-Math.random() * 6).toFixed(2) : null;
 
   const skin = pheno.skin.color || "#f6c9a4";
   const skinShadow = darken(skin, 0.12);
@@ -140,8 +168,11 @@ export function renderCharacter(pheno, opts = {}) {
   const leftEyeColor = eyeMain;
   const rightEyeColor = isOdd ? oddPair(eyeMain) : eyeMain;
 
+  const svgClass = alive ? "gg-char gg-alive" : "gg-char";
+  const svgStyle = alive ? ` style="animation-delay:${bobDelay}s"` : "";
+
   const svg = `
-<svg viewBox="0 0 220 240" width="${size}" height="${size * 240 / 220}" xmlns="http://www.w3.org/2000/svg" role="img">
+<svg viewBox="0 0 220 240" width="${size}" height="${size * 240 / 220}" xmlns="http://www.w3.org/2000/svg" role="img" class="${svgClass}"${svgStyle}>
   <!-- 뒷머리 -->
   ${backHair(hairColor, gender)}
 
@@ -168,8 +199,8 @@ export function renderCharacter(pheno, opts = {}) {
   <path d="M122 112 Q136 106 150 112" stroke="${browColor}" stroke-width="4" fill="none" stroke-linecap="round"/>
 
   <!-- 눈 -->
-  ${eye(86, leftEyeColor, eyeShape, hasFreckles)}
-  ${eye(134, rightEyeColor, eyeShape, hasFreckles)}
+  ${eye(86, leftEyeColor, eyeShape, skin, blinkDelay)}
+  ${eye(134, rightEyeColor, eyeShape, skin, blinkDelay)}
 
   <!-- 코 -->
   <path d="M108 150 Q110 154 112 150" stroke="${skinShadow}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
@@ -179,6 +210,9 @@ export function renderCharacter(pheno, opts = {}) {
 
   <!-- 앞머리 -->
   ${hairStyle === "curly" ? curlyFringe(hairColor) : straightFringe(hairColor)}
+
+  <!-- 떠오르는 하트 (맨 앞) -->
+  ${hearts && alive ? floatingHearts() : ""}
 </svg>`.trim();
 
   return svg;
